@@ -154,6 +154,9 @@ class MongoDatabaseAdapter(StorageAdapter):
         if 'tags' in kwargs:
             kwargs['tags'] = list(set(kwargs['tags']))
 
+        if 'stemmed_text' not in kwargs:
+            kwargs['stemmed_text'] = self.stemmer.stem(kwargs['text'])
+
         inserted = self.statements.insert_one(kwargs)
 
         kwargs['id'] = inserted.inserted_id
@@ -168,12 +171,17 @@ class MongoDatabaseAdapter(StorageAdapter):
             if 'tags' in statement:
                 statement['tags'] = list(set(statement['tags']))
 
+            if 'stemmed_text' not in statement:
+                statement['stemmed_text'] = self.stemmer.stem(statement['text'])
+
         self.statements.insert_many(statements)
 
     def update(self, statement):
         data = statement.serialize()
         data.pop('id', None)
         data.pop('tags', None)
+
+        data['stemmed_text'] = self.stemmer.stem(data['text'])
 
         update_data = {
             '$set': data

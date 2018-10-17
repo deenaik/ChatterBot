@@ -63,6 +63,9 @@ class DjangoStorageAdapter(StorageAdapter):
 
         tags = kwargs.pop('tags', [])
 
+        if 'stemmed_text' not in kwargs:
+            kwargs['stemmed_text'] = self.stemmer.stem(kwargs['text'])
+
         statement = Statement(**kwargs)
 
         statement.save()
@@ -90,6 +93,9 @@ class DjangoStorageAdapter(StorageAdapter):
 
             tags = set(statement_data.pop('tags', []))
 
+            if 'stemmed_text' not in statement_data:
+                statement_data['stemmed_text'] = self.stemmer.stem(statement_data['text'])
+
             statement = Statement.objects.create(**statement_data)
 
             tags_to_add = []
@@ -116,6 +122,7 @@ class DjangoStorageAdapter(StorageAdapter):
         else:
             statement = Statement.objects.create(
                 text=statement.text,
+                stemmed_text=self.stemmer.stem(statement.text),
                 conversation=statement.conversation,
                 in_response_to=statement.in_response_to,
                 created_at=statement.created_at

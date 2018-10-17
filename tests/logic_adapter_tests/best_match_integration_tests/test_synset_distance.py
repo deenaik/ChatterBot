@@ -53,7 +53,7 @@ class BestMatchSynsetDistanceTestCase(ChatBotTestCase):
         statement = Statement(text='Are you good')
         match = self.adapter.get(statement)
 
-        self.assertEqual('Are you good?', match)
+        self.assertEqual('Are you good?', match.text)
 
     def test_no_known_responses(self):
         """

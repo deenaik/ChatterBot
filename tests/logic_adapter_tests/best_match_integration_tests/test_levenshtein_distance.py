@@ -39,7 +39,7 @@ class BestMatchLevenshteinDistanceTestCase(ChatBotTestCase):
 
         match = self.adapter.get(statement)
 
-        self.assertEqual('What... is your quest?', match)
+        self.assertEqual('What... is your quest?', match.text)
 
     def test_confidence_exact_match(self):
         possible_choices = [
