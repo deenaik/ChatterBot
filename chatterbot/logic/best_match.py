@@ -1,5 +1,4 @@
 from chatterbot.logic import LogicAdapter
-from chatterbot import stemming
 
 
 class BestMatch(LogicAdapter):
@@ -13,9 +12,8 @@ class BestMatch(LogicAdapter):
         Takes a statement string and a list of statement strings.
         Returns the closest matching statement from the list.
         """
-        s = stemming.RidiculouslySimpleStemmer()
-        statement_list = self.chatbot.storage.filter(
-            stemmed_text=s.stem(input_statement.text)
+        statement_list = self.chatbot.storage.get_response_statements(
+            text=input_statement.text
         )
 
         closest_match = input_statement

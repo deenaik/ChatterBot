@@ -18,6 +18,9 @@ class SimpleStemmer(object):
 
     def stem(self, text):
 
+        if not text:
+            return ''
+
         # Remove punctuation
         text = text.translate(self.punctuation_table)
 

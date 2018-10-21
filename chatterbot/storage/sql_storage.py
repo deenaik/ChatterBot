@@ -157,7 +157,8 @@ class SQLStorageAdapter(StorageAdapter):
         tags = set(kwargs.pop('tags', []))
 
         if 'stemmed_text' not in kwargs:
-            kwargs['stemmed_text'] = self.stemmer.stem(kwargs['text'])
+            if kwargs.get('in_response_to'):
+                kwargs['stemmed_text'] = self.stemmer.stem(kwargs['in_response_to'])
 
         statement = Statement(**kwargs)
 
@@ -199,7 +200,8 @@ class SQLStorageAdapter(StorageAdapter):
             tags = set(statement_data.pop('tags', []))
 
             if 'stemmed_text' not in statement_data:
-                statement_data['stemmed_text'] = self.stemmer.stem(statement_data['text'])
+                if statement_data.get('in_response_to'):
+                    statement_data['stemmed_text'] = self.stemmer.stem(statement_data['in_response_to'])
 
             statement = Statement(**statement_data)
 
@@ -254,7 +256,8 @@ class SQLStorageAdapter(StorageAdapter):
 
             record.created_at = statement.created_at
 
-            record.stemmed_text = self.stemmer.stem(record.text)
+            if statement.in_response_to:
+                record.stemmed_text = self.stemmer.stem(statement.in_response_to)
 
             for _tag in statement.tags:
                 tag = session.query(Tag).filter_by(name=_tag).first()
@@ -290,14 +293,14 @@ class SQLStorageAdapter(StorageAdapter):
         session.close()
         return statement
 
-    def get_response_statements(self, page_size=1000):
+    def get_response_statements(self, text=None, page_size=1000):
         """
         Return only statements that are in response to another statement.
         A statement must exist which lists the closest matching statement in the
         in_response_to field. Otherwise, the logic adapter may find a closest
         matching statement that does not have a known response.
         """
-        from sqlalchemy import func
+        from sqlalchemy import func, or_
 
         Statement = self.get_model('statement')
 
@@ -308,10 +311,15 @@ class SQLStorageAdapter(StorageAdapter):
         start = 0
         stop = min(page_size, total_statements)
 
+        or_query = [
+            Statement.stemmed_text.contains(trigram) for trigram in self.stemmer.stem(text).split(' ')
+        ]
+
         while stop <= total_statements:
 
             statement_set = session.query(Statement).filter(
-                Statement.in_response_to.isnot(None)
+                Statement.in_response_to.isnot(None),
+                or_(*or_query)
             ).slice(start, stop)
 
             start += page_size
